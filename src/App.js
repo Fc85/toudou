@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import { confirmAlert } from "react-confirm-alert"; // Import
+import "react-confirm-alert/src/react-confirm-alert.css"; // Import css
 
 const App = () => {
   const [tasks, setTasks] = useState([]);
   const [isAllChecked, setIsAllChecked] = useState(false);
+  const [toShow, setToShow] = useState("all");
 
   const add = (e) => {
     if (e.key === "Enter") {
@@ -20,21 +23,35 @@ const App = () => {
   //TODO : box de confirmation
   const deleteItem = (index) => {
     let itemsClone = [...tasks];
-    itemsClone.splice(index, 1);
-    setTasks(itemsClone);
+    confirmAlert({
+      title: "Supprimer l'élément",
+      message: "Êtes vous sûr de vouloir supprimer cet élément ?",
+      buttons: [
+        {
+          label: "Oui",
+          onClick: () => {
+            itemsClone.splice(index, 1);
+            setTasks(itemsClone);
+          },
+        },
+        {
+          label: "Non",
+        },
+      ],
+    });
   };
 
   const checkAll = () => {
     let checkAllTasks = [...tasks];
     if (isAllChecked === false) {
-      checkAllTasks.forEach((element) => {
-        element.isChecked = true;
+      checkAllTasks.forEach((el) => {
+        el.isChecked = true;
       });
       setTasks(checkAllTasks);
       setIsAllChecked(true);
     } else {
-      checkAllTasks.forEach((element) => {
-        element.isChecked = false;
+      checkAllTasks.forEach((el) => {
+        el.isChecked = false;
       });
       setTasks(checkAllTasks);
       setIsAllChecked(false);
@@ -49,6 +66,41 @@ const App = () => {
       tempTasks[index].isChecked = false;
     }
     setTasks(tempTasks);
+  };
+
+  const clearComplete = () => {
+    let clearCompleteTasks = [...tasks];
+    // NE FONCTIONNE PAS SUR 2 ELEMENTS DE SUITE A SUPPRIMER
+    // clearCompleteTasks.forEach((el) => {
+    //   let index = clearCompleteTasks.indexOf(el);
+    //   if (el.isChecked === true) {
+    //     clearCompleteTasks.splice(index, 1);
+    //   }
+    // });
+    confirmAlert({
+      title: "Supprimer les éléments compélés",
+      message: "Êtes vous sûr de vouloir supprimer les éléments compélétés ?",
+      buttons: [
+        {
+          label: "Oui",
+          onClick: () => {
+            for (
+              let index = clearCompleteTasks.length - 1;
+              index >= 0;
+              index -= 1
+            ) {
+              if (clearCompleteTasks[index].isChecked === true) {
+                clearCompleteTasks.splice(index, 1);
+              }
+            }
+            setTasks(clearCompleteTasks);
+          },
+        },
+        {
+          label: "Non",
+        },
+      ],
+    });
   };
 
   useEffect(() => {
@@ -73,21 +125,79 @@ const App = () => {
         placeholder="Insert toudou item"
         onKeyPress={add}
       />
-      {tasks.map((item, index) => (
-        <div className="single-item" key={index}>
-          <div>
-            <input
-              id={index}
-              className="single-task"
-              type="checkbox"
-              checked={item.isChecked}
-              onClick={checked(index)}
-            />
-            <label for={index}>{item.name}</label>
-          </div>
-          <i className="fas fa-trash-alt" onClick={() => deleteItem(index)}></i>
-        </div>
-      ))}
+      {toShow === "all"
+        ? tasks.map((item, index) => (
+            <div className="single-item" key={index}>
+              <div>
+                <input
+                  id={index}
+                  className="single-task"
+                  type="checkbox"
+                  checked={item.isChecked}
+                  onClick={checked(index)}
+                />
+                <label for={index}>{item.name}</label>
+              </div>
+              <i
+                className="fas fa-trash-alt"
+                onClick={() => deleteItem(index)}
+              ></i>
+            </div>
+          ))
+        : toShow === "active"
+        ? tasks
+            .filter((item) => {
+              if (item.isChecked === false) {
+                return true;
+              } else {
+                return false;
+              }
+            })
+            .map((filtereditem, index) => (
+              <div className="single-item" key={index}>
+                <div>
+                  <input
+                    id={index}
+                    className="single-task"
+                    type="checkbox"
+                    checked={filtereditem.isChecked}
+                    onClick={checked(index)}
+                  />
+                  <label for={index}>{filtereditem.name}</label>
+                </div>
+                <i
+                  className="fas fa-trash-alt"
+                  onClick={() => deleteItem(index)}
+                ></i>
+              </div>
+            ))
+        : toShow === "complete" &&
+          tasks
+            .filter((item) => {
+              if (item.isChecked === true) {
+                return true;
+              } else {
+                return false;
+              }
+            })
+            .map((filtereditem, index) => (
+              <div className="single-item" key={index}>
+                <div>
+                  <input
+                    id={index}
+                    className="single-task"
+                    type="checkbox"
+                    checked={filtereditem.isChecked}
+                    onClick={checked(index)}
+                  />
+                  <label for={index}>{filtereditem.name}</label>
+                </div>
+                <i
+                  className="fas fa-trash-alt"
+                  onClick={() => deleteItem(index)}
+                ></i>
+              </div>
+            ))}
       <hr />
       <div className="check-all">
         <label>
@@ -101,10 +211,10 @@ const App = () => {
 
       <hr />
       <div className="buttons">
-        <button>All</button>
-        <button>Active</button>
-        <button>Complete</button>
-        <button>Clear Completed</button>
+        <button onClick={() => setToShow("all")}>All</button>
+        <button onClick={() => setToShow("active")}>Active</button>
+        <button onClick={() => setToShow("complete")}>Complete</button>
+        <button onClick={clearComplete}>Clear Completed</button>
       </div>
     </div>
   );
